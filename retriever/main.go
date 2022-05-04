@@ -34,6 +34,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -95,8 +96,15 @@ type PharmacyInfo struct {
 	Desc     string  `json:"desc,omitempty"` //注意書き
 }
 
+//住所と経度緯度の対応
+type Address2LatLon struct {
+	Address string  `json:"address"` //医療機関所在地（住所）
+	Lat     float64 `json:"lat"`     //緯度
+	Lon     float64 `json:"lon"`     //経度
+}
+
 //住所→緯度・経度変換URL
-const GEOCODE_URL = "https://geocode.csis.u-tokyo.ac.jp/cgi-bin/simple_geocode.cgi"
+const GEOCODE_URL = "https://geocode.csis.u-tokyo.ac.jp/cgi-bin/simple_geocode.cgi?charset=UTF8"
 
 //geocodeからの結果
 type GeocodeResult struct {
@@ -114,7 +122,10 @@ type RewardInfo struct {
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-
+	adr2ll, err := readPharmacyJson()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
 	//EXCELのURL一覧JSONからURL抽出
 	excels, err := readExcelInfo()
 	if err != nil {
@@ -126,9 +137,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
+	//薬局の調剤報酬設定
+	if err = setReward(pharmacy); err != nil {
+		log.Fatalf("%+v", err)
+	}
 
-	//追加の薬局情報（緯度経度、調剤報酬）取得
-	if err = retrieveAdditionalInfo(pharmacy); err != nil {
+	//薬局の緯度経度取得
+	if err = retrieveLocationInfo(pharmacy, adr2ll); err != nil {
 		log.Fatalf("%+v", err)
 	}
 
@@ -136,6 +151,26 @@ func main() {
 	if err = writeJSON(pharmacy); err != nil {
 		log.Fatalf("%+v", err)
 	}
+}
+
+//過去のpharmacy.jsonから住所と緯度経度の対応を抜き出す
+func readPharmacyJson() ([]*Address2LatLon, error) {
+	var ps []*Address2LatLon
+	//ファイルがなければ終了
+	if _, err := os.Stat(OUTPUT_JSON); err != nil {
+		return nil, nil
+	}
+	raw, err := ioutil.ReadFile(OUTPUT_JSON)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read pharmacy.json")
+	}
+	if err = yaml.Unmarshal(raw, &ps); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal pharmacy.json")
+	}
+	sort.Slice(ps, func(i, j int) bool {
+		return ps[i].Address < ps[j].Address
+	})
+	return ps, nil
 }
 
 //EXCELのURL一覧JSONからURL抽出
@@ -194,6 +229,7 @@ func retrieveExcel(excels []*ExcelInfo) ([]*PharmacyInfo, error) {
 					if path.Ext(f.Name) != ".xlsx" {
 						continue
 					}
+					//ZIP内のファイル名はSJISなのでUTF-8に変換
 					fname, _, err := transform.String(japanese.ShiftJIS.NewDecoder(), f.Name)
 					if err != nil {
 						return nil, errors.Wrap(err, "failed to transform the file name")
@@ -287,11 +323,8 @@ func extractPharmacy(r io.Reader, infos *ExcelInfo) ([]*PharmacyInfo, error) {
 	return ps, nil
 }
 
-//追加の薬局情報（緯度経度、調剤報酬）取得
-func retrieveAdditionalInfo(infos []*PharmacyInfo) error {
-	const RETRY = 10
-
-	log.Println("薬局の緯度経度及び調剤報酬加算を取得中...")
+//薬局の調剤報酬設定
+func setReward(infos []*PharmacyInfo) error {
 	//調剤報酬情報をJSONファイルから取得
 	var rewardInfo []*RewardInfo
 	raw, err := ioutil.ReadFile(REWARD_JSON)
@@ -302,6 +335,33 @@ func retrieveAdditionalInfo(infos []*PharmacyInfo) error {
 		return errors.Wrap(err, "failed to unmarshal point info")
 	}
 
+	for _, info := range infos {
+		//この薬局の診療報酬データを探す
+		var rinfo *RewardInfo
+		for _, rinfo = range rewardInfo {
+			if rinfo.ID == info.RewardID {
+				break
+			}
+		}
+		if rinfo == nil {
+			return errors.New("failed to find reward info")
+		}
+		//指定された調剤報酬があれば報酬追加
+		for _, f := range info.Facility {
+			if p, ok := rinfo.Reward[f]; ok {
+				info.Point += p
+			}
+		}
+	}
+	return nil
+}
+
+//薬局の緯度経度取得
+func retrieveLocationInfo(infos []*PharmacyInfo, adr []*Address2LatLon) error {
+	//ジオコードGETのリトライ回数
+	const RETRY = 10
+
+	log.Println("薬局の緯度経度を取得中...")
 	searchURL, err := url.Parse(GEOCODE_URL)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse search url")
@@ -311,7 +371,16 @@ func retrieveAdditionalInfo(infos []*PharmacyInfo) error {
 			log.Printf("  %d/%d個目を処理中", i, len(infos))
 		}
 
-		//ジオコーディングURLから緯度経度取得
+		//過去の住所と緯度経度の対応に住所があれば、それを使って次へ
+		si := sort.Search(len(adr), func(i int) bool {
+			return adr[i].Address >= info.Address
+		})
+		if i < len(adr) && adr[si].Address == info.Address {
+			info.Lon = adr[si].Lon
+			info.Lat = adr[si].Lat
+			continue
+		}
+		//対応に住所がなければジオコーディングURLから緯度経度取得
 		//クエリとして住所追加
 		q := searchURL.Query()
 		q.Set("addr", info.Address)
@@ -344,23 +413,6 @@ func retrieveAdditionalInfo(infos []*PharmacyInfo) error {
 		//緯度経度情報を設定
 		info.Lon = result.Candidate[0].Longitude
 		info.Lat = result.Candidate[0].Latitude
-
-		//この薬局の診療報酬データを探す
-		var rinfo *RewardInfo
-		for _, rinfo = range rewardInfo {
-			if rinfo.ID == info.RewardID {
-				break
-			}
-		}
-		if rinfo == nil {
-			return errors.New("failed to find reward info")
-		}
-		//指定された調剤報酬があれば報酬追加
-		for _, f := range info.Facility {
-			if p, ok := rinfo.Reward[f]; ok {
-				info.Point += p
-			}
-		}
 	}
 	return nil
 }
