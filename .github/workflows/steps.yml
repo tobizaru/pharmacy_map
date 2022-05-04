@@ -1,0 +1,14 @@
+name: make and update pharmacy map
+on: [workflow_dispatch]
+jobs:
+  update-pharmacies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          cd retriever
+          go run .
+          mv pharmacy.json ../docs
+          git add ../docs/pharmacy.json
+          git commit -m updated
+          git push origin master
