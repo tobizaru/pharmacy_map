@@ -160,13 +160,15 @@ func readPharmacyJson() ([]*Address2LatLon, error) {
 	if _, err := os.Stat(OUTPUT_JSON); err != nil {
 		return nil, nil
 	}
-	raw, err := ioutil.ReadFile(OUTPUT_JSON)
+	r, err := os.Open(OUTPUT_JSON)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read pharmacy.json")
+		return nil, errors.Wrap(err, "failed to open pharmacy.json")
 	}
-	if err = yaml.Unmarshal(raw, &ps); err != nil {
+	defer r.Close()
+	if err = yaml.NewDecoder(r).Decode(&ps); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal pharmacy.json")
 	}
+	//以後にサーチするためにソートしておく
 	sort.Slice(ps, func(i, j int) bool {
 		return ps[i].Address < ps[j].Address
 	})
