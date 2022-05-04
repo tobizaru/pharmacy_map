@@ -1,4 +1,4 @@
-name: make and update pharmacy map
+name: update pharmacy info
 on: [workflow_dispatch]
 jobs:
   update-pharmacies:
@@ -8,6 +8,8 @@ jobs:
       - run: |
           cd retriever
           go run .
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
           git add pharmacy.json
           git commit -m updated
           git push origin master
