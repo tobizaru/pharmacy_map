@@ -9,75 +9,75 @@
         "https://kouseikyoku.mhlw.go.jp/hokkaido/gyomu/gyomu/hoken_kikan/000236055.xlsx",
       ],
   },
-  # {
-  #   "department": "東北厚生局",
-  #   "origin_url": "",
-  #   "reward_id": "R020401",
-  #   "desc": "情報なし",
-  #   "excel_url": [],
-  # },
-  # {
-  #   "department": "関東信越厚生局",
-  #   "origin_url": "https://kouseikyoku.mhlw.go.jp/kantoshinetsu/chousa/kijyun.html",
-  #   "reward_id": "R020401",
-  #   "desc": "",
-  #   "excel_url":
-  #     [
-  #       "https://kouseikyoku.mhlw.go.jp/kantoshinetsu/chousa/shisetsu_yakkyoku_r0404.zip",
-  #     ],
-  # },
-  # {
-  #   "department": "東海北陸厚生局",
-  #   "origin_url": "https://kouseikyoku.mhlw.go.jp/tokaihokuriku/newpage_00349.html",
-  #   "reward_id": "R020401",
-  #   "desc": "",
-  #   "excel_url":
-  #     ["https://kouseikyoku.mhlw.go.jp/tokaihokuriku/2203-06_01-04.zip"],
-  # },
+  {
+    "department": "東北厚生局",
+    "origin_url": "",
+    "reward_id": "R020401",
+    "desc": "情報なし",
+    "excel_url": [],
+  },
+  {
+    "department": "関東信越厚生局",
+    "origin_url": "https://kouseikyoku.mhlw.go.jp/kantoshinetsu/chousa/kijyun.html",
+    "reward_id": "R020401",
+    "desc": "",
+    "excel_url":
+      [
+        "https://kouseikyoku.mhlw.go.jp/kantoshinetsu/chousa/shisetsu_yakkyoku_r0404.zip",
+      ],
+  },
+  {
+    "department": "東海北陸厚生局",
+    "origin_url": "https://kouseikyoku.mhlw.go.jp/tokaihokuriku/newpage_00349.html",
+    "reward_id": "R020401",
+    "desc": "",
+    "excel_url":
+      ["https://kouseikyoku.mhlw.go.jp/tokaihokuriku/2203-06_01-04.zip"],
+  },
 
-  # {
-  #   "department": "近畿厚生局",
-  #   "origin_url": "https://kouseikyoku.mhlw.go.jp/kinki/gyomu/gyomu/hoken_kikan/shitei_jokyo_00004.html",
-  #   "reward_id": "R020401",
-  #   "desc": "",
-  #   "excel_url":
-  #     [
-  #       "https://kouseikyoku.mhlw.go.jp/kinki/gyomu/gyomu/hoken_kikan/2022.4_sisetukijun_yakkyoku.zip",
-  #     ],
-  # },
-  # {
-  #   "department": "中国四国厚生局",
-  #   "origin_url": "https://kouseikyoku.mhlw.go.jp/chugokushikoku/chousaka/shisetsukijunjuri.html",
-  #   "reward_id": "R020401",
-  #   "desc": "",
-  #   "excel_url":
-  #     ["https://kouseikyoku.mhlw.go.jp/chugokushikoku/chousaka/000234410.zip"],
-  # },
-  # {
-  #   "department": "四国厚生局",
-  #   "origin_url": "",
-  #   "reward_id": "R020401",
-  #   "desc": "",
-  #   "excel_url":
-  #     [
-  #       "https://kouseikyoku.mhlw.go.jp/shikoku/gyomu/gyomu/hoken_kikan/shitei/000214142.zip",
-  #     ],
-  # },
-  # {
-  #   "department": "九州厚生局",
-  #   "origin_url": "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/index_00007.html",
-  #   "reward_id": "R020401",
-  #   "desc": "",
-  #   "excel_url":
-  #     [
-  #       "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_fukuoka.zip",
-  #       "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_saga.zip",
-  #       "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_nagasaki.zip",
-  #       "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_kumamoto.zip",
-  #       "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_ooita.zip",
-  #       "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_miyazaki.zip",
-  #       "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_kagoshima.zip",
-  #       "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_okinawa.zip",
-  #     ],
-  # },
+  {
+    "department": "近畿厚生局",
+    "origin_url": "https://kouseikyoku.mhlw.go.jp/kinki/gyomu/gyomu/hoken_kikan/shitei_jokyo_00004.html",
+    "reward_id": "R020401",
+    "desc": "",
+    "excel_url":
+      [
+        "https://kouseikyoku.mhlw.go.jp/kinki/gyomu/gyomu/hoken_kikan/2022.4_sisetukijun_yakkyoku.zip",
+      ],
+  },
+  {
+    "department": "中国四国厚生局",
+    "origin_url": "https://kouseikyoku.mhlw.go.jp/chugokushikoku/chousaka/shisetsukijunjuri.html",
+    "reward_id": "R020401",
+    "desc": "",
+    "excel_url":
+      ["https://kouseikyoku.mhlw.go.jp/chugokushikoku/chousaka/000234410.zip"],
+  },
+  {
+    "department": "四国厚生局",
+    "origin_url": "",
+    "reward_id": "R020401",
+    "desc": "",
+    "excel_url":
+      [
+        "https://kouseikyoku.mhlw.go.jp/shikoku/gyomu/gyomu/hoken_kikan/shitei/000214142.zip",
+      ],
+  },
+  {
+    "department": "九州厚生局",
+    "origin_url": "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/index_00007.html",
+    "reward_id": "R020401",
+    "desc": "",
+    "excel_url":
+      [
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_fukuoka.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_saga.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_nagasaki.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_kumamoto.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_ooita.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_miyazaki.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_kagoshima.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_03_shisetsu_okinawa.zip",
+      ],
+  },
 ]
