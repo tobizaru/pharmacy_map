@@ -37,8 +37,8 @@ let markers: Ref<Marker[]> = ref([]);
 
 const colorIcon = (color: string): L.Icon => {
   return new L.Icon({
-    iconUrl: `/images/marker-icon-2x-${color}.png`,
-    shadowUrl: "/images/marker-shadow.png",
+    iconUrl: `images/marker-icon-2x-${color}.png`,
+    shadowUrl: "images/marker-shadow.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
@@ -160,7 +160,7 @@ const displayPharmacies = () => {
 
 onMounted(async () => {
   await setupMap();
-  const resp = await axios.get<Pharmacy[]>("/pharmacy.json");
+  const resp = await axios.get<Pharmacy[]>("pharmacy.json");
   pharmacies = resp.data;
   displayPharmacies();
 
