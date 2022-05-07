@@ -10,6 +10,7 @@ import "@fortawesome/fontawesome-free/css/fontawesome.css";
 import "@fortawesome/fontawesome-free/css/brands.css";
 import "@fortawesome/fontawesome-free/css/regular.css";
 import "@fortawesome/fontawesome-free/css/solid.css";
+
 import ModalDialog from "../components/modalDialog.vue";
 
 interface Pharmacy {
@@ -26,8 +27,8 @@ interface Pharmacy {
 
 interface Marker {
   pharmacy: Pharmacy;
-  marker?: L.Marker;
-  label?: L.Marker;
+  marker: L.Marker;
+  label: L.Marker;
 }
 
 const isMenu = ref(false);
@@ -38,13 +39,15 @@ const dialog: { [key: string]: Ref<boolean> } = {
   isNotice: ref(false),
 };
 const markers: Ref<Marker[]> = ref([]);
-const selected: Ref<Marker | undefined> = ref();
+const selected: Ref<Pharmacy | undefined> = ref();
+
 const rate = ref(0.3);
 const search = ref("");
 const searchFilter: Ref<Pharmacy[]> = ref([]);
 
 let pharmacies: Pharmacy[] = [];
 let map: L.Map;
+let layer = L.layerGroup([]);
 
 const colorIcon = (color: string): L.Icon => {
   return new L.Icon({
@@ -65,6 +68,7 @@ const setupMap = async () => {
     attribution:
       "<a href='https://developers.google.com/maps/documentation' target='_blank'>Google Map</a>",
   }).addTo(map);
+  layer.addTo(map);
 
   L.control
     .zoom({
@@ -102,14 +106,11 @@ const setupMap = async () => {
   L.marker([lat, lon], { icon: label3 }).addTo(map);
 };
 
-const setMarker = (m: Marker) => {
-  m.marker?.remove();
-  m.label?.remove();
-  const p = m.pharmacy;
+const newMarker = (p: Pharmacy) => {
   const sames = markers.value.filter(
     (v) => v.pharmacy.lat === p.lat && v.pharmacy.lon === p.lon
   );
-  const label = L.divIcon({
+  const priceLabel = L.divIcon({
     iconSize: [125, 23],
     iconAnchor: [-15, 20],
     className: "text-md font-bold border-none",
@@ -117,25 +118,36 @@ const setMarker = (m: Marker) => {
       "<span class='bg-sky-500 text-white text-xs p-0.5 shadow-2xl shadow-gray-200'>" +
       `${p.point * 10 * rate.value}円</span>`,
   });
-  m.marker = L.marker([p.lat + sames.length * 0.0001, p.lon], {
+  const marker = L.marker([p.lat + sames.length * 0.0001, p.lon], {
     icon: colorIcon("green"),
-  }).addTo(map);
-  m.marker?.on("click", () => {
-    markerSelected(m);
+  }).addTo(layer);
+  marker.on("click", () => {
+    markerSelected(p);
   });
-  m.label = L.marker([p.lat + sames.length * 0.0001, p.lon], {
-    icon: label,
-  }).addTo(map);
-  if (p.id === selected.value?.pharmacy.id) {
-    m.marker?.bindPopup(p.name).openPopup();
+  const label = L.marker([p.lat + sames.length * 0.0001, p.lon], {
+    icon: priceLabel,
+  }).addTo(layer);
+  if (p.id === selected.value?.id) {
+    marker.bindPopup(p.name).openPopup();
+    setTimeout(() => {
+      marker.on("popupclose", () => {
+        selected.value = undefined;
+      });
+    }, 1000);
   }
+  const m: Marker = {
+    pharmacy: p,
+    marker: marker,
+    label: label,
+  };
+  return m;
 };
 
 const displayPharmacies = () => {
-  for (const m of markers.value) {
-    m.marker?.remove();
-    m.label?.remove();
-  }
+  layer.eachLayer((m) => {
+    m.off();
+  });
+  layer.clearLayers();
   markers.value = [];
 
   const bound = map.getBounds();
@@ -148,27 +160,20 @@ const displayPharmacies = () => {
   if (cnt >= 100) {
     message.value = "表示範囲を絞ってください。";
     return;
-  } else {
-    message.value = "";
   }
 
+  message.value = "";
   for (const p of pharmacies) {
     if (!bound.contains([p.lat, p.lon])) {
       continue;
     }
-    const m: Marker = {
-      pharmacy: p,
-    };
-    setMarker(m);
+    const m = newMarker(p);
     markers.value.push(m);
   }
   markers.value.sort((a, b) => a.pharmacy.point - b.pharmacy.point);
   for (let i = 0; i < markers.value.length; i++) {
     const c = markers.value[i];
     const p = c.pharmacy;
-    if (!c.marker || !c.label) {
-      setMarker(c);
-    }
     const label2 = L.divIcon({
       iconSize: [125, 23],
       iconAnchor: [-15, 20],
@@ -177,12 +182,10 @@ const displayPharmacies = () => {
         "<span class='bg-red-500 text-white text-md p-0.5'>" +
         `${p.point * 10 * rate.value}円(最安）</span>`,
     });
-    if (c.marker && c.label) {
-      c.marker.setIcon(colorIcon("gold"));
-      const loc = c.label.getLatLng();
-      c.label.remove();
-      c.label = L.marker([loc.lat, loc.lng], { icon: label2 }).addTo(map);
-    }
+    c.marker.setIcon(colorIcon("gold"));
+    const loc = c.label.getLatLng();
+    layer.removeLayer(c.label);
+    c.label = L.marker([loc.lat, loc.lng], { icon: label2 }).addTo(layer);
     if (
       markers.value.length > i + 1 &&
       markers.value[i + 1].pharmacy.point !== p.point
@@ -201,9 +204,6 @@ onMounted(async () => {
   map.on("moveend", () => {
     displayPharmacies();
   });
-  map.on("zoomend", () => {
-    displayPharmacies();
-  });
 });
 
 const offModal = () => {
@@ -220,16 +220,13 @@ const isAllModalOff = () => {
   return r;
 };
 
-const markerSelected = (m: Marker) => {
-  isMenu.value = true;
+const markerSelected = (m: Pharmacy) => {
   selected.value = m;
-  map.flyTo([m.pharmacy.lat, m.pharmacy.lon], 17);
+  map.flyTo([m.lat, m.lon], 17);
 };
 
 watch(rate, () => {
-  for (const m of markers.value) {
-    setMarker(m);
-  }
+  displayPharmacies();
 });
 
 const handleInput = () => {
@@ -248,11 +245,8 @@ const handleSearch = () => {
   if (!p || !p.length) {
     return;
   }
-  selected.value = {
-    pharmacy: p[0],
-  };
+  selected.value = p[0];
   map.panTo([p[0].lat, p[0].lon]);
-  isMenu.value = true;
 };
 </script>
 
@@ -302,10 +296,50 @@ const handleSearch = () => {
       </div>
       <div
         v-show="message"
-        class="absolute bottom-0 left-0 p-1.5 w-full md:w-96 h-8 z-1 font-bold text-white bg-orange-400 overflow-hidden shadow-xl text-sm"
+        class="absolute bottom-0 left-0 p-1.5 w-full md:w-96 h-8 z-1 font-bold text-white bg-orange-400 overflow-hidden shadow-xl text-sm z-10"
       >
         {{ message }}
       </div>
+      <transition
+        enter-active-class="transition ease-in-out duration-300 transform"
+        enter-from-class="translate-y-full"
+        enter-to-class="translate-y-0"
+        leave-active-class="transition ease-in-out duration-300 transform"
+        leave-from-class="translate-y-0"
+        leave-to-class="translate-y-full"
+      >
+        <div
+          v-show="selected"
+          class="absolute inset-x-0 bottom-0 bg-white pt-5 pr-5 pl-5 w-screen md:w-96 mx-auto shadow-2xl h-48"
+        >
+          <div class="text-center mb-2 bg-sky-500 text-white font-bold">
+            <i class="fa-solid fa-circle-info mr-3"></i>
+            薬局情報
+          </div>
+          <div>
+            <div class="font-bold mb-1">
+              {{ selected?.name }}
+            </div>
+            <div class="text-sm">
+              <div>
+                <i class="fa-solid fa-location-dot pr-2"></i>
+                〒 {{ selected?.post_id }}
+              </div>
+              <div class="pl-6">
+                {{ selected?.address }}
+              </div>
+            </div>
+            <div class="pt-1 text-sm">
+              <i class="fa-solid fa-phone pr-2"></i>
+              {{ selected?.telephone }}
+            </div>
+            <div class="pt-1 text-sm">
+              <i class="fa-solid fa-yen-sign pr-3"></i>
+              {{ selected?.point * 10 * rate }} 円
+            </div>
+          </div>
+        </div>
+      </transition>
       <transition
         enter-active-class="transition ease-in-out duration-300 transform"
         enter-from-class="-translate-x-full md:-translate-x-96"
@@ -328,61 +362,42 @@ const handleSearch = () => {
             ></i>
           </div>
           <div class="mt-2">
-            <div v-show="selected" class="mt-5 p-1 pb-2">
-              <div class="text-center mb-2 bg-sky-500 text-white font-bold">
-                <i class="fa-solid fa-circle-info mr-3"></i>
-                薬局情報
-              </div>
-              <div>
-                <div class="font-bold mb-1">
-                  {{ selected?.pharmacy.name }}
-                </div>
-                <div class="text-sm">
-                  <div>
-                    <i class="fa-solid fa-location-dot pr-2"></i>
-                    〒 {{ selected?.pharmacy.post_id }}
-                  </div>
-                  <div class="pl-6">
-                    {{ selected?.pharmacy.address }}
-                  </div>
-                </div>
-                <div class="pt-1 text-sm">
-                  <i class="fa-solid fa-phone pr-2"></i>
-                  {{ selected?.pharmacy.telephone }}
-                </div>
-                <div class="pt-1 text-sm">
-                  <i class="fa-solid fa-yen-sign pr-3"></i>
-                  {{ selected?.pharmacy.point * 10 * rate }} 円
-                </div>
-              </div>
-            </div>
             <div class="mt-2 p-1 pb-4 border-b-2 border-b-gray-300">
-              <div class="text-center mb-2 bg-sky-500 text-white font-bold">
-                <i class="fa-solid fa-award mr-3"></i>調剤基本料 格安ランキング
+              <div v-show="markers.length">
+                <div class="text-center mb-2 bg-sky-500 text-white font-bold">
+                  <i class="fa-solid fa-award mr-3"></i>調剤基本料
+                  格安ランキング
+                </div>
+                <ul class="">
+                  <li v-for="(m, i) in markers" :key="m.pharmacy.id">
+                    <div
+                      v-if="i < 10"
+                      class="grid grid-cols-12 text-sm mb-1"
+                      :class="{ 'bg-gray-100': i % 2 == 0 }"
+                    >
+                      <span
+                        class="col-span-1 bg-sky-500 text-white text-center font-bold"
+                      >
+                        {{ i + 1 }}</span
+                      >
+                      <span
+                        class="col-span-9 ml-2"
+                        @click="
+                          isMenu = false;
+                          markerSelected(m.pharmacy);
+                        "
+                      >
+                        {{ m.pharmacy.name }}
+                      </span>
+                      <span
+                        class="col-span-2 text-right text-black font-bold pr-1"
+                      >
+                        {{ m.pharmacy.point * 10 * rate }} 円
+                      </span>
+                    </div>
+                  </li>
+                </ul>
               </div>
-              <ul class="">
-                <li v-for="(m, i) in markers" :key="m.pharmacy.id">
-                  <div
-                    v-if="i < 10"
-                    class="grid grid-cols-12 text-sm mb-1"
-                    :class="{ 'bg-gray-100': i % 2 == 0 }"
-                  >
-                    <span
-                      class="col-span-1 bg-sky-500 text-white text-center font-bold"
-                    >
-                      {{ i + 1 }}</span
-                    >
-                    <span class="col-span-9 ml-2" @click="markerSelected(m)">
-                      {{ m.pharmacy.name }}
-                    </span>
-                    <span
-                      class="col-span-2 text-right text-black font-bold pr-1"
-                    >
-                      {{ m.pharmacy.point * 10 * rate }} 円
-                    </span>
-                  </div>
-                </li>
-              </ul>
             </div>
             <div class="mt-2">
               <div class="text-gray-700">
