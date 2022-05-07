@@ -7,6 +7,7 @@
 Go言語 バージョン1.18.1 
 
 ## 使い方
+
 1. $ git clone https://github.com/tobizaru/pharmacy_map
 1. $ cd retriever
 1. 調剤報酬をreward.ymlに記載します。
