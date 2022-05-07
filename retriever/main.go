@@ -116,7 +116,11 @@ type GeocodeResult struct {
 
 //調剤報酬JSONの構造
 type RewardInfo struct {
-	ID     string         `yaml:"id"`
+	ID              string `yaml:"id"`
+	SelectionReward []struct {
+		Reward map[string]int `yaml:"reward"`
+		Other  int            `yaml:"other"`
+	} `yaml:"selection_reward"`
 	Reward map[string]int `yaml:"reward"`
 }
 
@@ -352,6 +356,19 @@ func setReward(infos []*PharmacyInfo) error {
 		for _, f := range info.Facility {
 			if p, ok := rinfo.Reward[f]; ok {
 				info.Point += p
+			}
+		}
+		//選択式の調剤報酬、未記載の場合otherを選択
+		for _, sr := range rinfo.SelectionReward {
+			selected := false
+			for _, f := range info.Facility {
+				if p, ok := sr.Reward[f]; ok {
+					info.Point += p
+					selected = true
+				}
+			}
+			if !selected {
+				info.Point += sr.Other
 			}
 		}
 	}

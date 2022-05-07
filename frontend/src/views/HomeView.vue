@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import type { Ref } from "vue";
 
 import L from "leaflet";
@@ -10,11 +10,12 @@ import "@fortawesome/fontawesome-free/css/fontawesome.css";
 import "@fortawesome/fontawesome-free/css/brands.css";
 import "@fortawesome/fontawesome-free/css/regular.css";
 import "@fortawesome/fontawesome-free/css/solid.css";
+import ModalDialog from "../components/modalDialog.vue";
 
 interface Pharmacy {
   id: string;
   name: string;
-  postID: string;
+  post_id: string;
   address: string;
   telephone: string;
   fax: string;
@@ -24,16 +25,26 @@ interface Pharmacy {
 }
 
 interface Marker {
-  marker: L.Marker;
   pharmacy: Pharmacy;
-  label: L.Marker;
+  marker?: L.Marker;
+  label?: L.Marker;
 }
 
 const isMenu = ref(false);
 const message = ref("");
+const dialog: { [key: string]: Ref<boolean> } = {
+  isDisclaimer: ref(false),
+  isExplain: ref(false),
+  isNotice: ref(false),
+};
+const markers: Ref<Marker[]> = ref([]);
+const selected: Ref<Marker | undefined> = ref();
+const rate = ref(0.3);
+const search = ref("");
+const searchFilter: Ref<Pharmacy[]> = ref([]);
+
+let pharmacies: Pharmacy[] = [];
 let map: L.Map;
-let pharmacies: Pharmacy[];
-let markers: Ref<Marker[]> = ref([]);
 
 const colorIcon = (color: string): L.Icon => {
   return new L.Icon({
@@ -61,8 +72,8 @@ const setupMap = async () => {
     })
     .addTo(map);
 
-  let lat = 35.652832,
-    lon = 139.839478;
+  let lat = 35.652832;
+  let lon = 139.839478;
   if ("geolocation" in navigator) {
     let opt = {
       enableHighAccuracy: true,
@@ -91,64 +102,87 @@ const setupMap = async () => {
   L.marker([lat, lon], { icon: label3 }).addTo(map);
 };
 
+const setMarker = (m: Marker) => {
+  m.marker?.remove();
+  m.label?.remove();
+  const p = m.pharmacy;
+  const sames = markers.value.filter(
+    (v) => v.pharmacy.lat === p.lat && v.pharmacy.lon === p.lon
+  );
+  const label = L.divIcon({
+    iconSize: [125, 23],
+    iconAnchor: [-15, 20],
+    className: "text-md font-bold border-none",
+    html:
+      "<span class='bg-sky-500 text-white text-xs p-0.5 shadow-2xl shadow-gray-200'>" +
+      `${p.point * 10 * rate.value}円</span>`,
+  });
+  m.marker = L.marker([p.lat + sames.length * 0.0001, p.lon], {
+    icon: colorIcon("green"),
+  }).addTo(map);
+  m.marker?.on("click", () => {
+    markerSelected(m);
+  });
+  m.label = L.marker([p.lat + sames.length * 0.0001, p.lon], {
+    icon: label,
+  }).addTo(map);
+  if (p.id === selected.value?.pharmacy.id) {
+    m.marker?.bindPopup(p.name).openPopup();
+  }
+};
+
 const displayPharmacies = () => {
   for (const m of markers.value) {
-    m.marker.remove();
-    m.label.remove();
+    m.marker?.remove();
+    m.label?.remove();
   }
   markers.value = [];
+
   const bound = map.getBounds();
   let cnt = 0;
+  for (const p of pharmacies) {
+    if (bound.contains([p.lat, p.lon])) {
+      cnt++;
+    }
+  }
+  if (cnt >= 100) {
+    message.value = "表示範囲を絞ってください。";
+    return;
+  } else {
+    message.value = "";
+  }
+
   for (const p of pharmacies) {
     if (!bound.contains([p.lat, p.lon])) {
       continue;
     }
-    const sames = markers.value.filter(
-      (v) => v.pharmacy.lat === p.lat && v.pharmacy.lon === p.lon
-    );
-    const label = L.divIcon({
-      iconSize: [125, 23],
-      iconAnchor: [-15, 20],
-      className: "text-md font-bold border-none",
-      html:
-        "<span class='bg-sky-500 text-white text-xs p-0.5'>" +
-        `${p.point * 10}円</span>`,
-    });
     const m: Marker = {
       pharmacy: p,
-      marker: L.marker([p.lat + sames.length * 0.0001, p.lon], {
-        icon: colorIcon("green"),
-      }).addTo(map),
-      label: L.marker([p.lat + sames.length * 0.0001, p.lon], {
-        icon: label,
-      }).addTo(map),
     };
+    setMarker(m);
     markers.value.push(m);
-    if (++cnt >= 100) {
-      break;
-    }
-  }
-  if (cnt >= 100) {
-    message.value = "薬局数が１００を超えましたので全ては表示しません。";
-  } else {
-    message.value = "";
   }
   markers.value.sort((a, b) => a.pharmacy.point - b.pharmacy.point);
   for (let i = 0; i < markers.value.length; i++) {
     const c = markers.value[i];
     const p = c.pharmacy;
+    if (!c.marker || !c.label) {
+      setMarker(c);
+    }
     const label2 = L.divIcon({
       iconSize: [125, 23],
       iconAnchor: [-15, 20],
       className: "text-md font-bold border-none",
-      html: `<span class="bg-red-500 text-white text-md p-0.5">${
-        p.point * 10
-      }円(最安）</span>`,
+      html:
+        "<span class='bg-red-500 text-white text-md p-0.5'>" +
+        `${p.point * 10 * rate.value}円(最安）</span>`,
     });
-    c.marker.setIcon(colorIcon("gold"));
-    const loc = c.label.getLatLng();
-    c.label.remove();
-    c.label = L.marker([loc.lat, loc.lng], { icon: label2 }).addTo(map);
+    if (c.marker && c.label) {
+      c.marker.setIcon(colorIcon("gold"));
+      const loc = c.label.getLatLng();
+      c.label.remove();
+      c.label = L.marker([loc.lat, loc.lng], { icon: label2 }).addTo(map);
+    }
     if (
       markers.value.length > i + 1 &&
       markers.value[i + 1].pharmacy.point !== p.point
@@ -171,23 +205,104 @@ onMounted(async () => {
     displayPharmacies();
   });
 });
+
+const offModal = () => {
+  for (const k of Object.keys(dialog)) {
+    dialog[k].value = false;
+  }
+};
+
+const isAllModalOff = () => {
+  let r = true;
+  for (const k of Object.keys(dialog)) {
+    r &&= !dialog[k].value;
+  }
+  return r;
+};
+
+const markerSelected = (m: Marker) => {
+  isMenu.value = true;
+  selected.value = m;
+  map.flyTo([m.pharmacy.lat, m.pharmacy.lon], 17);
+};
+
+watch(rate, () => {
+  for (const m of markers.value) {
+    setMarker(m);
+  }
+});
+
+const handleInput = () => {
+  if (!search.value) {
+    searchFilter.value = [];
+    return;
+  }
+  searchFilter.value = pharmacies.filter((v) => v.name.includes(search.value));
+};
+
+const handleSearch = () => {
+  if (!search.value) {
+    return;
+  }
+  const p = pharmacies.filter((v) => v.name === search.value);
+  if (!p || !p.length) {
+    return;
+  }
+  selected.value = {
+    pharmacy: p[0],
+  };
+  map.panTo([p[0].lat, p[0].lon]);
+  isMenu.value = true;
+};
 </script>
 
 <template>
   <main>
     <div>
-      <div :class="{ 'opacity-60': isMenu }">
+      <div :class="{ 'opacity-50': !isAllModalOff() }">
         <div id="map" class="w-screen h-screen z-0"></div>
       </div>
-      <div
-        class="absolute inset-4 pb-1 pl-1.5 pt-0.5 w-10 h-10 z-1 bg-white border border-1 border-black border-solid"
-        @click="isMenu = !isMenu"
-      >
-        <i class="fa-solid fa-bars text-3xl"></i>
+      <div class="absolute inset-2 pr-3 h-10 w-full md:w-96 z-1">
+        <div
+          class="border border-1 border-gray-300 border-solid flex flex-row gap-2 shadow-xl rounded-lg bg-white"
+        >
+          <div @click="isMenu = !isMenu">
+            <i class="fa-solid fa-bars text-xl pl-2 pt-1"></i>
+          </div>
+          <input
+            v-model="search"
+            list="pharmacy_list"
+            class="border-l-2 pl-1 w-64"
+            placeholder="薬局を検索"
+            @input="handleInput"
+            @change="handleSearch"
+          />
+          <datalist v-if="!isMenu" id="pharmacy_list">
+            <option
+              v-for="p in searchFilter"
+              :key="p.id"
+              :value="p.name"
+            ></option>
+          </datalist>
+          <i class="fa-solid fa-magnifying-glass text-xl mt-1 ml-7"></i>
+        </div>
+        <div class="mt-1">
+          <select
+            v-model="rate"
+            class="bg-white rounded-lg shadow-xl border-2 border-gray-300"
+            name="rate"
+          >
+            <option disabled value="">自己負担割合</option>
+            <option value="0.3">3割</option>
+            <option value="0.1">1割</option>
+            <option value="0.2">2割</option>
+            <option value="1">全額</option>
+          </select>
+        </div>
       </div>
       <div
         v-show="message"
-        class="absolute top-0 right-0 p-1.5 w-400 h-8 z-1 font-bold text-white bg-orange-400 overflow-hidden shadow-2xl m-3"
+        class="absolute bottom-0 left-0 p-1.5 w-full md:w-96 h-8 z-1 font-bold text-white bg-orange-400 overflow-hidden shadow-xl text-sm"
       >
         {{ message }}
       </div>
@@ -198,62 +313,179 @@ onMounted(async () => {
         leave-from-class="translate-x-0"
         leave-active-class="transition ease-in-out duration-300 transform"
         leave-to-class="-translate-x-full"
-        appear
       >
         <div
           v-show="isMenu"
-          class="absolute inset-0 p-1.5 w-screen md:w-96 h-full z-1 bg-white overflow-hidden shadow-2xl"
+          class="absolute inset-0 p-1.5 w-screen md:w-96 h-screen z-1 bg-white overflow-hidden shadow-2xl"
         >
           <div class="grid grid-cols-12 mt-1">
-            <div
-              class="col-start-2 col-span-7 text-2xl font-bold text-gray-500"
-            >
-              格安薬局マップ
+            <div class="col-start-2 col-span-7 text-xl font-bold">
+              <i class="fa-solid fa-capsules mr-3"></i>格安薬局マップ
             </div>
             <i
               class="col-end-12 col-span-1 fa-solid fa-xmark text-3xl ml-5 text-gray-400"
               @click="isMenu = !isMenu"
             ></i>
           </div>
-          <div class="mt-5 p-1">
-            <div class="text-center bg-sky-500 text-white font-bold">
-              <i class="fa-solid fa-award mr-3"></i>格安ランキング10位
-            </div>
-            <ul class="mt-2 pb-4 border-b-2 border-b-gray-300">
-              <li v-for="(m, i) in markers" :key="m.pharmacy.id">
-                <div
-                  v-if="i < 10"
-                  class="grid grid-cols-12 text-sm mb-0.5"
-                  :class="{ 'bg-pink-100': i % 2 == 0 }"
-                >
-                  <span
-                    class="col-span-1 bg-pink-500 text-white text-center font-bold"
-                  >
-                    {{ i + 1 }}</span
-                  >
-                  <span class="col-span-9 ml-2 font-bold">
-                    {{ m.pharmacy.name }}</span
-                  >
-                  <span
-                    class="col-span-2 text-right bg-gray-400 text-white font-bold pr-1"
-                  >
-                    {{ m.pharmacy.point * 10 }} 円
-                  </span>
-                </div>
-              </li>
-            </ul>
-            <div class="mt-2 pb-4 pt-4 border-b-2 border-b-gray-300">
-              <div class="text-center bg-sky-500 text-white font-bold">
-                <i class="fa-regular fa-circle-question mr-2"></i>FAQ
+          <div class="mt-2">
+            <div v-show="selected" class="mt-5 p-1 pb-2">
+              <div class="text-center mb-2 bg-sky-500 text-white font-bold">
+                <i class="fa-solid fa-circle-info mr-3"></i>
+                薬局情報
               </div>
-              <ul>
-                <li class="bg-pink-100">これは何？</li>
-                <li>これは何？</li>
+              <div>
+                <div class="font-bold mb-1">
+                  {{ selected?.pharmacy.name }}
+                </div>
+                <div class="text-sm">
+                  <div>
+                    <i class="fa-solid fa-location-dot pr-2"></i>
+                    〒 {{ selected?.pharmacy.post_id }}
+                  </div>
+                  <div class="pl-6">
+                    {{ selected?.pharmacy.address }}
+                  </div>
+                </div>
+                <div class="pt-1 text-sm">
+                  <i class="fa-solid fa-phone pr-2"></i>
+                  {{ selected?.pharmacy.telephone }}
+                </div>
+                <div class="pt-1 text-sm">
+                  <i class="fa-solid fa-yen-sign pr-3"></i>
+                  {{ selected?.pharmacy.point * 10 * rate }} 円
+                </div>
+              </div>
+            </div>
+            <div class="mt-2 p-1 pb-4 border-b-2 border-b-gray-300">
+              <div class="text-center mb-2 bg-sky-500 text-white font-bold">
+                <i class="fa-solid fa-award mr-3"></i>調剤基本料 格安ランキング
+              </div>
+              <ul class="">
+                <li v-for="(m, i) in markers" :key="m.pharmacy.id">
+                  <div
+                    v-if="i < 10"
+                    class="grid grid-cols-12 text-sm mb-1"
+                    :class="{ 'bg-gray-100': i % 2 == 0 }"
+                  >
+                    <span
+                      class="col-span-1 bg-sky-500 text-white text-center font-bold"
+                    >
+                      {{ i + 1 }}</span
+                    >
+                    <span class="col-span-9 ml-2" @click="markerSelected(m)">
+                      {{ m.pharmacy.name }}
+                    </span>
+                    <span
+                      class="col-span-2 text-right text-black font-bold pr-1"
+                    >
+                      {{ m.pharmacy.point * 10 * rate }} 円
+                    </span>
+                  </div>
+                </li>
               </ul>
+            </div>
+            <div class="mt-2">
+              <div class="text-gray-700">
+                <i class="fa-solid fa-circle-question mr-3 text-lg"></i>
+                <span
+                  class="text-sm"
+                  @click="
+                    offModal();
+                    dialog.isExplain.value = true;
+                  "
+                  >格安薬局マップについて</span
+                >
+              </div>
+            </div>
+            <div class="mt-2">
+              <div class="text-gray-700">
+                <i class="fa-solid fa-triangle-exclamation mr-3 text-lg"></i>
+                <span
+                  class="text-sm"
+                  @click="
+                    offModal();
+                    dialog.isNotice.value = true;
+                  "
+                  >ご注意</span
+                >
+              </div>
+            </div>
+            <div class="mt-2">
+              <a href="/" class="text-gray-700">
+                <i class="fa-solid fa-house mr-3 text-lg"></i>
+                <span class="text-sm">格安薬局マップ ホーム</span>
+              </a>
+            </div>
+            <div class="mt-2">
+              <div class="text-gray-700">
+                <i class="fa-solid fa-circle-exclamation mr-3 text-lg"></i>
+                <span
+                  class="text-sm"
+                  @click="
+                    offModal();
+                    dialog.isDisclaimer.value = true;
+                  "
+                  >出典・免責</span
+                >
+              </div>
+            </div>
+            <div class="mt-2 pb-2 border-b-2 border-b-gray-300">
+              <a
+                href="https://github.com/tobizaru/pharmacy_map"
+                class="text-gray-700"
+              >
+                <i class="fa-brands fa-github mr-3 text-lg"></i>
+                <span class="text-sm">ソースファイル（github)</span>
+              </a>
             </div>
           </div>
         </div>
       </transition>
     </div>
+    <ModalDialog v-model:is-show="dialog.isDisclaimer.value">
+      <template #title>
+        <i class="fa-solid fa-circle-exclamation mr-3 text-2lg"></i> 免責その他
+      </template>
+      <template #content>
+        <div class="">
+          <div>本マップは</div>
+          <div class="ml-3">厚生労働省の各厚生局HP</div>
+          <div class="ml-3">「施設基準の届出等受理状況一覧」</div>
+          <div>を元に作成しています。</div>
+          <div class="mt-5 mr-2">
+            当該コンテンツに起因してご利用者様および第三者に損害が発生したとしても、当方は一切責任を負いません。
+          </div>
+        </div>
+      </template>
+    </ModalDialog>
+    <ModalDialog v-model:is-show="dialog.isExplain.value">
+      <template #title>
+        <i class="fa-solid fa-circle-question mr-3 text-3lg"></i>
+        格安薬局マップについて
+      </template>
+      <template #content>
+        <div class="">
+          各薬局ごとで異なる「調剤基本料」を元に、表示している地域内の格安薬局がひと目でわかるマップです。
+        </div>
+        <div>
+          詳しくは<a href="/" class="text-blue-500 underline"> ホーム</a>
+          を参照してください。
+        </div>
+      </template>
+    </ModalDialog>
+    <ModalDialog v-model:is-show="dialog.isNotice.value">
+      <template #title>
+        <i class="fa-solid fa-triangle-exclamation mr-3 text-2lg"></i>ご注意
+      </template>
+      <template #content>
+        <div class="">
+          令和4年4月1日付けで調剤報酬点数が変更となりましたが厚生局からは最新のデータが公開されていません。
+          そのため実際の調剤基本料と異なる場合があります。
+        </div>
+        <div>
+          また東北厚生局では薬局情報が全く公開されていませんので、東北地方の薬局情報は閲覧できません。
+        </div>
+      </template>
+    </ModalDialog>
   </main>
 </template>
