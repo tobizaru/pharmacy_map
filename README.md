@@ -1,9 +1,19 @@
 # 薬局マップ
 
-[薬局マップ](https://tobizaru.github.io/pharmacy-map/)
+[薬局マップ](https://tobizaru.github.io/pharmacy_map/)
 
 
-調剤報酬の調剤基本料付きの薬局マップです（作成中）。
+調剤報酬の調剤基本料付きの薬局マップです。
+
+次の２つの構成から成ります。
+
+* [retriever](/retriever)
+   
+   厚生局から薬局情報を取得するプログラム（Go言語）
+
+* [frontend](frontend)
+
+  ブラウザ上に薬局マップを表示するフロントエンド（Vue3)
 
 ## ライセンス
 
