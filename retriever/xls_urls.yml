@@ -2,7 +2,7 @@
   {
     "department": "北海道厚生局",
     "origin_url": "https://kouseikyoku.mhlw.go.jp/hokkaido/gyomu/gyomu/hoken_kikan/todokede_juri_ichiran.html",
-    "reward_id": "R020401",
+    "reward_id": "R040401",
     "desc": "",
     "excel_url":
       [
@@ -12,7 +12,7 @@
   {
     "department": "東北厚生局",
     "origin_url": "https://kouseikyoku.mhlw.go.jp/tohoku/gyomu/gyomu/hoken_kikan/documents/201805koushin.html",
-    "reward_id": "R020401",
+    "reward_id": "R040401",
     "desc": "",
     "excel_url":
       [
@@ -22,7 +22,7 @@
   {
     "department": "関東信越厚生局",
     "origin_url": "https://kouseikyoku.mhlw.go.jp/kantoshinetsu/chousa/kijyun.html",
-    "reward_id": "R020401",
+    "reward_id": "R040401",
     "desc": "",
     "excel_url":
       [
@@ -32,7 +32,7 @@
   {
     "department": "東海北陸厚生局",
     "origin_url": "https://kouseikyoku.mhlw.go.jp/tokaihokuriku/newpage_00349.html",
-    "reward_id": "R020401",
+    "reward_id": "R040401",
     "desc": "",
     "excel_url":
       ["https://kouseikyoku.mhlw.go.jp/tokaihokuriku/2207-06_01-04.zip"],
@@ -41,7 +41,7 @@
   {
     "department": "近畿厚生局",
     "origin_url": "https://kouseikyoku.mhlw.go.jp/kinki/gyomu/gyomu/hoken_kikan/shitei_jokyo_00004.html",
-    "reward_id": "R020401",
+    "reward_id": "R040401",
     "desc": "",
     "excel_url":
       [
@@ -51,7 +51,7 @@
   {
     "department": "中国四国厚生局",
     "origin_url": "https://kouseikyoku.mhlw.go.jp/chugokushikoku/chousaka/shisetsukijunjuri.html",
-    "reward_id": "R020401",
+    "reward_id": "R040401",
     "desc": "",
     "excel_url":
       ["https://kouseikyoku.mhlw.go.jp/chugokushikoku/chousaka/000248829.xlsx"],
