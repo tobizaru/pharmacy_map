@@ -6,7 +6,7 @@
     "desc": "",
     "excel_url":
       [
-        "https://kouseikyoku.mhlw.go.jp/hokkaido/gyomu/gyomu/hoken_kikan/000236055.xlsx",
+        "https://kouseikyoku.mhlw.go.jp/hokkaido/gyomu/gyomu/hoken_kikan/000245826.xlsx",
       ],
   },
   {
@@ -16,7 +16,7 @@
     "desc": "",
     "excel_url":
       [
-        "https://kouseikyoku.mhlw.go.jp/tohoku/gyomu/gyomu/hoken_kikan/documents/todokede_zentai_yakkyoku_R0403.zip",
+        "https://kouseikyoku.mhlw.go.jp/tohoku/gyomu/gyomu/hoken_kikan/documents/todokede_zentai_yakkyoku_R0406.zip",
       ],
   },
   {
@@ -26,7 +26,7 @@
     "desc": "",
     "excel_url":
       [
-        "https://kouseikyoku.mhlw.go.jp/kantoshinetsu/chousa/shisetsu_yakkyoku_r0404.zip",
+        "https://kouseikyoku.mhlw.go.jp/kantoshinetsu/chousa/shisetsu_yakkyoku_r0407.zip",
       ],
   },
   {
@@ -35,7 +35,7 @@
     "reward_id": "R020401",
     "desc": "",
     "excel_url":
-      ["https://kouseikyoku.mhlw.go.jp/tokaihokuriku/2203-06_01-04.zip"],
+      ["https://kouseikyoku.mhlw.go.jp/tokaihokuriku/2207-06_01-04.zip"],
   },
 
   {
@@ -45,7 +45,7 @@
     "desc": "",
     "excel_url":
       [
-        "https://kouseikyoku.mhlw.go.jp/kinki/gyomu/gyomu/hoken_kikan/2022.4_sisetukijun_yakkyoku.zip",
+        "https://kouseikyoku.mhlw.go.jp/kinki/gyomu/gyomu/hoken_kikan/2022.7_sisetukijun_yakkyoku.zip",
       ],
   },
   {
@@ -54,7 +54,7 @@
     "reward_id": "R020401",
     "desc": "",
     "excel_url":
-      ["https://kouseikyoku.mhlw.go.jp/chugokushikoku/chousaka/000234410.zip"],
+      ["https://kouseikyoku.mhlw.go.jp/chugokushikoku/chousaka/000248829.xlsx"],
   },
   {
     "department": "四国厚生局",
@@ -64,7 +64,7 @@
 
     "excel_url":
       [
-        "https://kouseikyoku.mhlw.go.jp/shikoku/gyomu/gyomu/hoken_kikan/shitei/000239245.zip",
+        "https://kouseikyoku.mhlw.go.jp/shikoku/gyomu/gyomu/hoken_kikan/shitei/000246604.zip",
       ],
   },
   {
@@ -74,14 +74,14 @@
     "desc": "",
     "excel_url":
       [
-        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_05_shisetsu_fukuoka.zip",
-        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_05_shisetsu_saga.zip",
-        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_05_shisetsu_nagasaki.zip",
-        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_05_shisetsu_kumamoto.zip",
-        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_05_shisetsu_ooita.zip",
-        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_05_shisetsu_miyazaki.zip",
-        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_05_shisetsu_kagoshima.zip",
-        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_05_shisetsu_okinawa.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_07_shisetsu_fukuoka.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_07_shisetsu_saga.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_07_shisetsu_nagasaki.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_07_shisetsu_kumamoto.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_07_shisetsu_ooita.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_07_shisetsu_miyazaki.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_07_shisetsu_kagoshima.zip",
+        "https://kouseikyoku.mhlw.go.jp/kyushu/gyomu/gyomu/hoken_kikan/r4_07_shisetsu_okinawa.zip",
       ],
   },
 ]
